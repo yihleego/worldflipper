@@ -15,7 +15,10 @@ Content-Type: application/json
   "code": 4,
   "data": {
     "potions": [
-      "potion_timelimit"
+      {
+        "name": "potion_timelimit",
+        "quantity": 2
+      }
     ]
   },
   "device": "00008101-000678213A9A001E"

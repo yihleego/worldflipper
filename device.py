@@ -79,6 +79,7 @@ class Device:
         t = threading.Thread(target=new_task.start, daemon=True)
         if not old_task:
             t.start()
+            self.task = new_task
             return
         while True:
             if old_task.is_finished():

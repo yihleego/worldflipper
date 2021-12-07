@@ -25,7 +25,7 @@ class TaskStatus:
 class Config:
     def __init__(self, data=None):
         self.data = data
-        self.potions = []
+        self.potions: list[dict] = []
         self.analyze()
 
     def analyze(self):
@@ -75,20 +75,23 @@ class Task(ABC):
     def connect(self):
         self.device = connect_device("iOS:///127.0.0.1:18100")
 
-    def click(self, v, wait_time=0, cache=False):
+    def click(self, v, wait_time=0, retries=0, cache=False):
         if not self.event.is_set():
             return
         try:
             p = None
-            if cache:
-                if not v.last_position:
-                    v.last_position = exists(v)
-                if v.last_position:
-                    p = touch(v.last_position)
-            else:
-                p = exists(v)
+            for i in range(retries + 1):
+                if cache:
+                    if not v.last_position:
+                        v.last_position = exists(v)
+                    if v.last_position:
+                        p = touch(v.last_position)
+                else:
+                    p = exists(v)
+                    if p:
+                        touch(p)
                 if p:
-                    touch(p)
+                    break
             if wait_time > 0 and p:
                 sleep(wait_time)
         except Exception as e:
@@ -111,12 +114,18 @@ class Task(ABC):
         if not exists(Items.POTION_SMALL):
             return
         for p in potions:
+            name = p.get('name')
+            quantity = p.get('quantity')
+            if name is None or quantity is None or quantity <= 0:
+                continue
             for t in Items.templates():
-                if p == t.name:
-                    self.click(t, wait_time=1)
-                    self.click(Buttons.USE, wait_time=1)
-                    self.click(Buttons.OK)
+                if name == t.name:
+                    self.click(t, wait_time=1, retries=3)
+                    self.click(Buttons.USE, wait_time=1, retries=3)
+                    self.click(Buttons.OK, retries=3)
+                    p['quantity'] = quantity - 1
                     return
+        print('Not recovered')
 
 
 class Boss(Task):
