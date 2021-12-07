@@ -4,7 +4,7 @@ from abc import ABC
 from airtest.core.api import *
 from tidevice import Device
 
-from assets import Buttons
+from assets import Buttons, Items
 
 
 class TaskType:
@@ -22,6 +22,20 @@ class TaskStatus:
     FAILED = 3
 
 
+class Config:
+    def __init__(self, data=None):
+        self.data = data
+        self.potions = []
+        self.analyze()
+
+    def analyze(self):
+        if not self.data:
+            return
+        potions = self.data.get("potions")
+        if potions and isinstance(potions, list):
+            self.potions = potions
+
+
 class Task(ABC):
     def __init__(self, event, type, data=None, loop=False):
         self.event = event
@@ -30,6 +44,7 @@ class Task(ABC):
         self.loop = loop
         self.status = TaskStatus.INIT
         self.device = None
+        self.config = Config(data)
 
     def execute(self):
         raise NotImplementedError
@@ -89,6 +104,20 @@ class Task(ABC):
             image.save("temp/" + filename + ".png")
             print(f"filename: {filename}")
 
+    def recover(self):
+        potions = self.config.potions
+        if not potions:
+            return
+        if not exists(Items.POTION_SMALL):
+            return
+        for p in potions:
+            for t in Items.templates():
+                if p == t.name:
+                    self.click(t, wait_time=1)
+                    self.click(Buttons.USE, wait_time=1)
+                    self.click(Buttons.OK)
+                    return
+
 
 class Boss(Task):
     def __init__(self, event, data=None):
@@ -133,6 +162,8 @@ class Battlefield(Task):
         self.click(Buttons.NEXT, wait_time=1)
         print("click RESTART_CHALLENGE")
         self.click(Buttons.RESTART_CHALLENGE)
+        print("try to add stamina")
+        self.recover()
 
 
 def get_class(type):

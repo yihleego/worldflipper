@@ -1,14 +1,17 @@
 from airtest.core.api import Template
 
 
-class CachedTemplate(Template):
-    def __init__(self, filename):
-        super().__init__(filename)
-        self.last_position = None
-
-
 def t(dir, name):
-    return CachedTemplate(f'assets/{dir}/{name}.png')
+    return CachedTemplate(dir, name)
+
+
+class CachedTemplate(Template):
+    def __init__(self, dir, name):
+        filename = f'assets/{dir}/{name}.png'
+        super().__init__(filename)
+        self.dir = dir
+        self.name = name
+        self.last_position = None
 
 
 class Buttons:
@@ -31,3 +34,15 @@ class Items:
     ARUKU_CHOCOLATE = t(__DIR__, 'aruku_chocolate')
     SHIRO_MARSHMALLOW = t(__DIR__, 'shiro_marshmallow')
     STAR_STONE = t(__DIR__, 'star_stone')
+
+    @staticmethod
+    def templates():
+        return [
+            Items.POTION_SMALL,
+            Items.POTION_MEDIUM,
+            Items.POTION_LARGE,
+            Items.POTION_TIMELIMIT,
+            Items.ARUKU_CHOCOLATE,
+            Items.SHIRO_MARSHMALLOW,
+            Items.STAR_STONE,
+        ]

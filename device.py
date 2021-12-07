@@ -83,6 +83,7 @@ class Device:
         while True:
             if old_task.is_finished():
                 t.start()
+                self.task = new_task
                 break
             time.sleep(0.1)
 

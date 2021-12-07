@@ -1,0 +1,22 @@
+### Stop
+POST http://127.0.0.1:18000/tasks
+Content-Type: application/json
+
+{
+  "code": -1,
+  "device": "00008101-000678213A9A001E"
+}
+
+### Battlefield
+POST http://127.0.0.1:18000/tasks
+Content-Type: application/json
+
+{
+  "code": 4,
+  "data": {
+    "potions": [
+      "potion_timelimit"
+    ]
+  },
+  "device": "00008101-000678213A9A001E"
+}
