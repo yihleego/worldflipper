@@ -37,8 +37,9 @@ class Config:
 
 
 class Task(ABC):
-    def __init__(self, event, type, data=None, loop=False):
+    def __init__(self, event, uri, type, data=None, loop=False):
         self.event = event
+        self.uri = uri
         self.type = type
         self.data = data
         self.loop = loop
@@ -52,7 +53,7 @@ class Task(ABC):
     def start(self):
         self.event.set()
         self.status = TaskStatus.RUNNING
-        self.connect()
+        self.device = connect_device(self.uri)
         try:
             if self.loop:
                 while self.event.is_set():
@@ -71,9 +72,6 @@ class Task(ABC):
 
     def is_finished(self):
         return self.status == TaskStatus.SUCCESS or self.status == TaskStatus.FAILED
-
-    def connect(self):
-        self.device = connect_device("iOS:///127.0.0.1:18100")
 
     def click(self, v, wait_time=0, retries=0, cache=False):
         if not self.event.is_set():
@@ -129,40 +127,40 @@ class Task(ABC):
 
 
 class Boss(Task):
-    def __init__(self, event, data=None):
-        super().__init__(event, TaskType.BOSS, data, loop=True)
+    def __init__(self, event, uri, data=None):
+        super().__init__(event, uri, TaskType.BOSS, data, loop=True)
 
     def execute(self):
         pass
 
 
 class Dragon(Task):
-    def __init__(self, event, data=None):
-        super().__init__(event, TaskType.DRAGON, data, loop=True)
+    def __init__(self, event, uri, data=None):
+        super().__init__(event, uri, TaskType.DRAGON, data, loop=True)
 
     def execute(self):
         pass
 
 
 class Maze(Task):
-    def __init__(self, event, data=None):
-        super().__init__(event, TaskType.MAZE, data, loop=True)
+    def __init__(self, event, uri, data=None):
+        super().__init__(event, uri, TaskType.MAZE, data, loop=True)
 
     def execute(self):
         pass
 
 
 class Abyss(Task):
-    def __init__(self, event, data=None):
-        super().__init__(event, TaskType.ABYSS, data, loop=True)
+    def __init__(self, event, uri, data=None):
+        super().__init__(event, uri, TaskType.ABYSS, data, loop=True)
 
     def execute(self):
         pass
 
 
 class Battlefield(Task):
-    def __init__(self, event, data=None):
-        super().__init__(event, TaskType.BATTLEFIELD, data, loop=True)
+    def __init__(self, event, uri, data=None):
+        super().__init__(event, uri, TaskType.BATTLEFIELD, data, loop=True)
 
     def execute(self):
         print("click START_CHALLENGE")
@@ -186,8 +184,8 @@ def get_class(type):
     return mapping.get(type)
 
 
-def create_task(type, data):
+def create_task(type, uri, data):
     clazz = get_class(type)
     if clazz:
         event = threading.Event()
-        return clazz(event, data)
+        return clazz(event, uri, data)

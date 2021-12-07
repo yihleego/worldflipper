@@ -31,6 +31,11 @@ class DeviceStatus:
     STOPPED = 2
 
 
+class DeviceType:
+    IOS = 0
+    ANDROID = 1
+
+
 class Device:
     def __init__(self, id, name=None, conn_type=None, task: Task = None):
         self.id = id
@@ -61,7 +66,7 @@ class Device:
             if type == -1:
                 return
             # Create a new task and replace the old one
-            new_task = create_task(type, data)
+            new_task = create_task(type, "iOS:///127.0.0.1:18100", data)
             if not new_task:
                 raise Exception(f"Invalid task type: {type}")
             self.run_task(new_task, old_task)
