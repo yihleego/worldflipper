@@ -1,85 +1,71 @@
-import threading
+import asyncio
 
 import tidevice
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Request, Query, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
 
 from device import Device, DeviceStatus
-from models import Result, TaskCreateParam, DeviceCreateParam
+from models import Result, TaskExecuteParam
 
 app = FastAPI()
 app.mount("/worldflipper", StaticFiles(directory="static", html=True), name="static")
 app.devices = {}
-app.lock = threading.Lock()
+app.lock = asyncio.locks.Lock()
 
 
-@app.post("/tasks")
-async def create_task(param: TaskCreateParam):
-    app.lock.acquire()
-    try:
-        device = app.devices.get(param.device)
-        if device is None:
-            return Result.build_failure("Device does not exist")
-        device.start_task(param.code, param.data)
-        return Result.build_success(True, "OK")
-    finally:
-        app.lock.release()
-
-
-@app.post("/devices")
-async def create_device(param: DeviceCreateParam):
-    app.lock.acquire()
-    try:
-        device = app.devices.get(param.device)
-        if device is None or device.status == DeviceStatus.STOPPED:
-            if device:
-                device.close()
-            try:
-                um = tidevice.Usbmux()
-                tid = tidevice.Device(param.device, um)
-            except:
-                return Result.build_failure("Device does not exist")
-            device = Device(tid.udid, tid.name, tid.info.conn_type)
-            app.devices[param.device] = device
-        return Result.build_success(device.to_dict())
-    finally:
-        app.lock.release()
+@app.post("/devices/{device_id}")
+async def connect_device(device_id):
+    device = app.devices.get(device_id)
+    if device is None or device.status == DeviceStatus.STOPPED:
+        if device:
+            device.close()
+        tid = get_tidevice(device_id)
+        device = Device(tid.udid, tid.name, tid.info.conn_type)
+        app.devices[device_id] = device
+    return Result.build_success(device.to_dict())
 
 
 @app.get("/devices")
-async def get_devices(connected: bool = Query(None)):
-    app.lock.acquire()
-    try:
-        result = []
-        if connected:
-            for d in app.devices.values():
-                result.append(d.to_dict())
-        else:
-            um = tidevice.Usbmux()
-            for info in um.device_list():
-                udid, conn_type = info.udid, info.conn_type
-                try:
-                    tid = tidevice.Device(udid, um)
-                    name = tid.name
-                except:
-                    name = ""
-                result.append(dict(id=udid, name=name, conn_type=conn_type))
-        return Result.build_success(result)
-    finally:
-        app.lock.release()
+async def get_devices(all: bool = Query(None), connected: bool = Query(None)):
+    result = []
+    if all:
+        um = tidevice.Usbmux()
+        for info in um.device_list():
+            udid, conn_type = info.udid, info.conn_type
+            tid = get_tidevice(udid)
+            name = tid.name
+            result.append(dict(id=udid, name=name, conn_type=conn_type))
+    elif connected:
+        for d in app.devices.values():
+            result.append(d.to_dict())
+    return Result.build_success(result)
 
 
-@app.delete("/devices/{id}")
-async def delete_devices(id):
-    app.lock.acquire()
-    try:
-        device = app.devices.pop(id)
-        if device:
-            device.close()
-        return Result.build_success(True, "OK")
-    finally:
-        app.lock.release()
+@app.delete("/devices/{device_id}")
+async def delete_devices(device_id):
+    device = app.devices.pop(device_id)
+    if device:
+        device.close()
+    return Result.build_success(True, "OK")
+
+
+@app.post("/devices/{device_id}/tasks")
+async def execute_task(device_id, param: TaskExecuteParam):
+    device = app.devices.get(device_id)
+    if device is None:
+        return Result.build_failure("No device detected")
+    device.start_task(param.code, param.data)
+    return Result.build_success(True, "OK")
+
+
+@app.get("/devices/{device_id}/screenshots")
+async def get_screenshot(device_id, scale: float = Query(1)):
+    screenshot = None
+    device = app.devices.get(device_id)
+    if device:
+        screenshot = device.screenshot_base64(scale)
+    return Result.build_success(screenshot)
 
 
 @app.on_event("startup")
@@ -91,7 +77,18 @@ async def startup():
 async def shutdown():
     if app.devices:
         for d in app.devices:
-            d.stop()
+            d.close()
+
+
+@app.middleware("http")
+async def request_lock(request: Request, call_next):
+    locked = await app.lock.acquire()
+    print('locked', locked)
+    try:
+        return await call_next(request)
+    finally:
+        app.lock.release()
+        print('unlocked', locked)
 
 
 @app.exception_handler(Exception)
@@ -102,3 +99,11 @@ async def catch_any_exception(_, e: Exception):
 @app.exception_handler(HTTPException)
 async def catch_http_exception(_, e: HTTPException):
     return JSONResponse(status_code=e.status_code, content=e.detail)
+
+
+def get_tidevice(device_id):
+    try:
+        um = tidevice.Usbmux()
+        return tidevice.Device(device_id, um)
+    except:
+        raise Exception("No device detected")

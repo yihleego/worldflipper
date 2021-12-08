@@ -22,15 +22,6 @@ class Result(BaseModel):
         return Result(success=False, message=message, code=code)
 
 
-class TaskCreateParam(BaseModel):
+class TaskExecuteParam(BaseModel):
     code: int
     data: Optional[dict]
-    device: str
-
-
-class DeviceCreateParam(BaseModel):
-    device: str
-
-
-class DeviceQueryParam(BaseModel):
-    connected: bool

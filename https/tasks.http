@@ -1,25 +1,35 @@
 ### Stop
-POST http://127.0.0.1:18000/tasks
+POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E/tasks
 Content-Type: application/json
 
 {
-  "code": -1,
-  "device": "00008101-000678213A9A001E"
+  "code": -1
 }
 
 ### Battlefield
-POST http://127.0.0.1:18000/tasks
+POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E/tasks
 Content-Type: application/json
 
 {
-  "code": 4,
+  "code": 60,
   "data": {
     "potions": [
       {
         "name": "potion_timelimit",
-        "quantity": 2
+        "quantity": 9999
+      },
+      {
+        "name": "lodestar_bead",
+        "quantity": 9999
       }
     ]
-  },
-  "device": "00008101-000678213A9A001E"
+  }
+}
+
+### BattlefieldGacha
+POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E/tasks
+Content-Type: application/json
+
+{
+  "code": 61
 }

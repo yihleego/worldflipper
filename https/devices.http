@@ -1,19 +1,19 @@
-### Get all devices
-GET http://127.0.0.1:18000/devices?connected=false
+### Query all devices
+GET http://127.0.0.1:18000/devices?all=true
 Content-Type: application/json
 
-### Get connected devices
+### Query connected devices
 GET http://127.0.0.1:18000/devices?connected=true
 Content-Type: application/json
 
-### Create devices
-POST http://127.0.0.1:18000/devices
+### Connect the device
+POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E
 Content-Type: application/json
 
-{
-  "device": "00008101-000678213A9A001E"
-}
-
-### Delete a device
+### Disconnect the device
 DELETE http://127.0.0.1:18000/devices/00008101-000678213A9A001E
+Content-Type: application/json
+
+### Get a screenshot
+GET http://127.0.0.1:18000/devices/00008101-000678213A9A001E/screenshots?scale=0.2
 Content-Type: application/json
