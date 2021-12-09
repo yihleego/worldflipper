@@ -6,6 +6,10 @@ Content-Type: application/json
 GET http://127.0.0.1:18000/devices?connected=true
 Content-Type: application/json
 
+### Query the device
+GET http://127.0.0.1:18000/devices/00008101-000678213A9A001E
+Content-Type: application/json
+
 ### Connect the device
 POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E
 Content-Type: application/json
@@ -16,4 +20,8 @@ Content-Type: application/json
 
 ### Get a screenshot
 GET http://127.0.0.1:18000/devices/00008101-000678213A9A001E/screenshots?scale=0.2
+Content-Type: application/json
+
+### Home
+POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E/actions?type=home
 Content-Type: application/json

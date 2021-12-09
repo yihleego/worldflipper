@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <title>World Flipper</title>
+    <meta charset='UTF-8'>
+    <meta content='World Flipper' name='description'>
+    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <link rel="shortcut icon" href="images/favicon.png">
+    <link rel="stylesheet" href="styles/vue-element.css" type="text/css">
+    <link rel="stylesheet" href="styles/index.css" type="text/css">
+</head>
+<body>
+<main id='app'>
+    <div class="main">
+        <div class="device-list">
+            <el-input-number v-model="interval" @change="changeInterval" :min="1" :max="999" label="间隔"></el-input-number>
+            <el-row>
+                <el-col :span="6" v-for="(o, index) in devices" :key="o">
+                    <el-card>
+                        <div style=" margin:0 auto;">
+                            <el-image :src="o.screenshot"
+                                      style="height: 240px; display: block;"
+                                      fit="contain">
+                                <div slot="error" class="image-slot">
+                                    <i class="el-icon-picture-outline"></i>
+                                </div>
+                            </el-image>
+                        </div>
+                        <div>
+                            <span>{{ o.name }} [{{ o.conn_type }}]</span>
+                            <div>
+                                <span>设备：</span>
+                                <span>{{ o.type_name }}</span>
+                                <span>{{ o.status_name }}</span>
+                            </div>
+                            <div v-if="o.task_type_name">
+                                <span>任务：</span>
+                                <span>{{ o.task_type_name }}</span>
+                                <span>{{ o.task_status_name }}</span>
+                            </div>
+                            <div class="bottom clearfix">
+                                <el-button v-if="!o.connected" type="text" class="button" @click="connectDevice(o.id)">连接</el-button>
+                                <el-button v-if="o.connected" type="text" class="button" @click="disconnectDevice(o.id)">断开连接</el-button>
+                                <el-button v-if="o.connected" type="text" class="button" @click="goHome(o.id)">Home</el-button>
+                            </div>
+                            <div class="bottom clearfix">
+                                <el-button type="text" class="button" @click="queryDevice(o.id)">刷新设备</el-button>
+                            </div>
+                            <div class="bottom clearfix">
+                                <el-button type="text" class="button" @click="getScreenshot(o.id)">刷新屏幕</el-button>
+                                <span>自动刷新：</span>
+                                <el-switch v-model="o.autoRefresh" active-color="#13ce66" text=""></el-switch>
+                            </div>
+                        </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+        </div>
+    </div>
+</main>
+<script src='scripts/vue.min.js'></script>
+<script src="scripts/vue-element.min.js"></script>
+<script src='scripts/axios.min.js'></script>
+<script src="scripts/main.js"></script>
+</body>
+</html>

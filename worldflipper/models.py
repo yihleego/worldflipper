@@ -24,4 +24,4 @@ class Result(BaseModel):
 
 class TaskExecuteParam(BaseModel):
     code: int
-    data: Optional[dict]
+    config: Optional[dict]

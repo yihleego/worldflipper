@@ -11,16 +11,17 @@ POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E/tasks
 Content-Type: application/json
 
 {
-  "code": 60,
-  "data": {
+  "code": 100,
+  "config": {
+    "skip_pre": true,
     "potions": [
       {
         "name": "potion_timelimit",
-        "quantity": 9999
+        "quantity": 0
       },
       {
         "name": "lodestar_bead",
-        "quantity": 9999
+        "quantity": 0
       }
     ]
   }
@@ -31,5 +32,8 @@ POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E/tasks
 Content-Type: application/json
 
 {
-  "code": 61
+  "code": 101,
+  "config": {
+    "skip_pre": true
+  }
 }

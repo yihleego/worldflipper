@@ -1,0 +1,9 @@
+web:
+  port: 18000
+wda:
+  port: 18100
+  bundle_id: 'com.facebook.WebDriverAgentRunner.worldflipper.xctrunner'
+logging:
+  level: info
+  filename: ./logs/worldflipper.log
+  format: '%(asctime)s %(levelname)-5s [%(process)d-%(thread)d-%(threadName)s] %(module)s#%(funcName)s : %(message)s'
