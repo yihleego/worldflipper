@@ -1,4 +1,6 @@
 import asyncio
+import uuid
+from datetime import datetime
 
 import tidevice
 from fastapi import FastAPI, Request, Query, HTTPException
@@ -6,11 +8,12 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from worldflipper import images
-from worldflipper.device import Device, DeviceStatus, DeviceType, ActionType
-from worldflipper.models import Result, TaskExecuteParam
+from worldflipper.device import Device, DeviceStatus, DeviceType
+from worldflipper.models import Result, TaskExecuteParam, ActionType, ScreenshotType
 
 app = FastAPI()
 app.mount("/worldflipper", StaticFiles(directory='static', html=True), name="static")
+app.mount("/assets", StaticFiles(directory='assets'), name="assets")
 app.devices = {}
 app.lock = asyncio.locks.Lock()
 
@@ -48,7 +51,7 @@ async def get_device(device_id):
 @app.post("/devices/{device_id}")
 async def connect_device(device_id):
     device = app.devices.get(device_id)
-    if device is None or device.status == DeviceStatus.STOPPED:
+    if device is None or device.status == DeviceStatus.DISCONNECTED:
         if device:
             device.close()
         tid = get_tidevice(device_id)
@@ -66,11 +69,19 @@ async def disconnect_devices(device_id):
 
 
 @app.get("/devices/{device_id}/screenshots")
-async def get_device_screenshot(device_id, scale: float = Query(1)):
+async def get_device_screenshot(device_id, scale: float = Query(1), type: str = Query(ScreenshotType.BASE64)):
     if device_id in app.devices:
-        result = app.devices[device_id].screenshot(scale)
+        image = app.devices[device_id].screenshot()
     else:
-        result = images.base64(get_tidevice(device_id).screenshot(), scale)
+        image = get_tidevice(device_id).screenshot()
+    if type == ScreenshotType.BASE64:
+        result = images.base64(image, scale)
+    elif type == ScreenshotType.FILE:
+        filename = 'screenshots/{}/{}.png'.format(datetime.now().strftime("%Y%m%d"), uuid.uuid4())
+        images.download(image, 'static/' + filename, scale)
+        result = filename
+    else:
+        result = None
     return Result.build_success(result)
 
 
@@ -84,12 +95,21 @@ async def execute_device_action(device_id, type: str = Query(None)):
 
 
 @app.post("/devices/{device_id}/tasks")
-async def execute_task(device_id, param: TaskExecuteParam):
+async def start_task(device_id, param: TaskExecuteParam):
     device = app.devices.get(device_id)
     if device is None:
         return Result.build_failure("No device detected")
     device.start_task(param.code, param.config)
-    return Result.build_success(True, "OK")
+    return Result.build_success()
+
+
+@app.delete("/devices/{device_id}/tasks")
+async def stop_task(device_id):
+    device = app.devices.get(device_id)
+    if device is None:
+        return Result.build_failure("No device detected")
+    device.stop_task()
+    return Result.build_success()
 
 
 @app.on_event("startup")

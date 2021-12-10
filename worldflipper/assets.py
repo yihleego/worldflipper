@@ -60,9 +60,9 @@ class Events:
 
 
 class Tips:
-    NO_TOKEN = tt('no_token')
     QUEST_RESULT = tt('quest_result')
-
+    GACHA_NO_TOKEN = tt('gacha_no_token')
+    GACHA_NO_CHANCE = tt('gacha_no_chance')
 
 def templates(clazz):
     ts = []

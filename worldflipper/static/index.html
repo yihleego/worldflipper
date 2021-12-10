@@ -7,55 +7,102 @@
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
     <link rel="shortcut icon" href="images/favicon.png">
     <link rel="stylesheet" href="styles/vue-element.css" type="text/css">
-    <link rel="stylesheet" href="styles/index.css" type="text/css">
 </head>
 <body>
 <main id='app'>
     <div class="main">
         <div class="device-list">
-            <el-input-number v-model="interval" @change="changeInterval" :min="1" :max="999" label="间隔"></el-input-number>
             <el-row>
-                <el-col :span="6" v-for="(o, index) in devices" :key="o">
+                <el-col :span="8" v-for="(o, index) in devices" :key="o">
                     <el-card>
-                        <div style=" margin:0 auto;">
-                            <el-image :src="o.screenshot"
-                                      style="height: 240px; display: block;"
-                                      fit="contain">
-                                <div slot="error" class="image-slot">
-                                    <i class="el-icon-picture-outline"></i>
-                                </div>
-                            </el-image>
-                        </div>
-                        <div>
-                            <span>{{ o.name }} [{{ o.conn_type }}]</span>
-                            <div>
-                                <span>设备：</span>
+                        <el-form label-position="left" label-width="auto" size="mini" status-icon>
+                            <el-form-item style="text-align: center; margin:0 auto;">
+                                <el-image :src="o.screenshot || 'images/favicon.png'"
+                                          style="height: 240px; display: block;"
+                                          fit="contain">
+                                    <div slot="error" class="image-slot">
+                                        <i class="el-icon-picture-outline"></i>
+                                    </div>
+                                </el-image>
+                                <!-- <el-button type="text" class="button" @click="goHome(o.id)">Home</el-button> -->
+                            </el-form-item>
+                            <el-form-item style="text-align: center; margin:0 auto;">
+                                <span>{{ o.name }}</span>
                                 <span>{{ o.type_name }}</span>
-                                <span>{{ o.status_name }}</span>
-                            </div>
-                            <div v-if="o.task_type_name">
-                                <span>任务：</span>
+                                <!--<span>[{{ o.conn_type }}]</span>-->
+                                <i v-if="o.status==0" class="el-icon-loading" style="color: blue"></i>
+                                <i v-if="o.status==1" class="el-icon-circle-check" style="color: green"></i>
+                                <i v-if="o.status==2" class="el-icon-circle-close" style="color: red"></i>
+                            </el-form-item>
+                            <el-form-item v-if="o.task_type_name" style="text-align: center; margin:0 auto;">
                                 <span>{{ o.task_type_name }}</span>
                                 <span>{{ o.task_status_name }}</span>
-                            </div>
-                            <div class="bottom clearfix">
-                                <el-button v-if="!o.connected" type="text" class="button" @click="connectDevice(o.id)">连接</el-button>
-                                <el-button v-if="o.connected" type="text" class="button" @click="disconnectDevice(o.id)">断开连接</el-button>
-                                <el-button v-if="o.connected" type="text" class="button" @click="goHome(o.id)">Home</el-button>
-                            </div>
-                            <div class="bottom clearfix">
-                                <el-button type="text" class="button" @click="queryDevice(o.id)">刷新设备</el-button>
-                            </div>
-                            <div class="bottom clearfix">
-                                <el-button type="text" class="button" @click="getScreenshot(o.id)">刷新屏幕</el-button>
-                                <span>自动刷新：</span>
-                                <el-switch v-model="o.autoRefresh" active-color="#13ce66" text=""></el-switch>
-                            </div>
-                        </div>
+                                <i v-if="o.task_status==0 || o.task_status==1" class="el-icon-loading" style="color: green"></i>
+                                <i v-if="o.task_status==2" class="el-icon-circle-check" style="color: green"></i>
+                                <i v-if="o.task_status==3" class="el-icon-circle-close" style="color: red"></i>
+                                <i v-if="o.task_status==4" class="el-icon-warning-outline" style="color: red"></i>
+                            </el-form-item>
+                            <el-form-item v-if="!o.connected" style="text-align: center; margin:0 auto;">
+                                <el-button type="success" @click="connectDevice(o.id)">连接设备</el-button>
+                                <el-button type="primary" @click="queryDevice(o.id)">刷新设备</el-button>
+                            </el-form-item>
+                            <el-form-item v-if="o.connected" style="text-align: center; margin:0 auto;">
+                                <el-button type="danger" @click="disconnectDevice(o.id)">断开连接</el-button>
+                                <el-button type="primary" @click="queryDevice(o.id)">刷新设备</el-button>
+                            </el-form-item>
+                            <el-form-item v-if="o.connected" style="text-align: center; margin:0 auto;">
+                                <el-button type="danger" @click="stopTask(o.id)" v-if="o.task_status==1">停止任务</el-button>
+                                <el-button type="primary" @click="showNewTaskForm(o.id)">执行任务</el-button>
+                            </el-form-item>
+                            <el-form-item v-if="o.connected" style="text-align: center; margin:0 auto;">
+                                <el-checkbox v-model="o.enableAutoRefresh" @change="changeAutoRefreshSwitch(o.id)">自动刷新</el-checkbox>
+                            </el-form-item>
+                        </el-form>
                     </el-card>
                 </el-col>
             </el-row>
         </div>
+
+        <el-input-number v-model="interval" @change="changeAutoRefreshInterval" :min="1" :max="999" label="间隔"></el-input-number>
+
+        <el-dialog title="新任务" :visible.sync="showNewTask">
+            <el-form ref="newTask" :model="task" label-position="top" label-width="auto" size="mini" status-icon>
+                <el-form-item label="选择任务">
+                    <el-select v-model="task.code" @change="changeTaskType" placeholder="请选择">
+                        <el-option v-for="i in taskTypes" :key="i" :label="i.name" :value="i.code"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="前置操作">
+                    <el-radio-group v-model="task.config.skip_pre">
+                        <el-radio :label="true">直接执行</el-radio>
+                        <el-radio :label="false">先回到首页</el-radio>
+                    </el-radio-group>
+                    <!--<el-switch v-model="task.config.skip_pre" active-color="#13ce66" text=""></el-switch>-->
+                    <!--<el-select v-model="task.config.skip_pre" placeholder="请选择">
+                        <el-option label="是" value="false"></el-option>
+                        <el-option label="否" value="true"></el-option>
+                    </el-select>-->
+                </el-form-item>
+                <el-form-item label="使用消耗品" v-if="task.config.potions">
+                    <el-row v-for="i in task.config.potions">
+                        <el-col>
+                            <div style=" text-align: center;display:flex;display: -webkit-flex; align-items:center;    margin-bottom: 3px;">
+                                <el-image :src="i.uri" fit="contain" :alt="i.name" style="display: block;width: 28px; height: 28px; margin-right: 5px;">
+                                    <div slot="error" class="image-slot">
+                                        <i class="el-icon-picture-outline"></i>
+                                    </div>
+                                </el-image>
+                                <el-input-number v-model="i.quantity" :min="0" :max="9999" controls-position="right" style="display: block;"></el-input-number>
+                                <!-- <span style="display: block;color: #8492a6;font-size: 12px; margin:0px; padding: 0px">{{i.name}}</span> -->
+                            </div>
+                        </el-col>
+                    </el-row>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="startTask('newTask')" class="btn btn-primary">开始任务</el-button>
+            </div>
+        </el-dialog>
     </div>
 </main>
 <script src='scripts/vue.min.js'></script>

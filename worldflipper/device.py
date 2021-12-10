@@ -7,7 +7,7 @@ import tidevice
 import wda
 from tidevice._wdaproxy import WDAService
 
-from worldflipper import config, images
+from worldflipper import config
 from worldflipper.task import Task, TaskType
 
 
@@ -16,7 +16,7 @@ class Device:
         self.id = id
         self.name = name
         self.type = type
-        self.status = DeviceStatus.INIT
+        self.status = DeviceStatus.INITIALIZING
         self.conn_type = conn_type
         self.task = task
         self.port = config.next_wda_port()
@@ -29,10 +29,10 @@ class Device:
         self.wda_service = WDAService(self.d, bundle_id=self.bundle_id, env={}, check_interval=30)
         self.wda_proxy_thread = threading.Thread(target=wda_proxy, args=(self.id, self.port, self.wda_service, self), daemon=True)
         self.wda_proxy_thread.start()
-        self.status = DeviceStatus.RUNNING
+        self.status = DeviceStatus.CONNECTED
 
     def close(self):
-        self.status = DeviceStatus.RUNNING
+        self.status = DeviceStatus.CONNECTED
         self.stop_task()
         self.wda_service.stop()
         self.d.app_stop(self.bundle_id)
@@ -42,9 +42,6 @@ class Device:
         try:
             # Stop the old task
             old_task = self.stop_task()
-            # Return if just stop
-            if type == -1:
-                return
             # Create a new task and replace the old one
             new_task = TaskType.create_task(type, self.air_uri, config)
             if not new_task:
@@ -77,8 +74,8 @@ class Device:
         self.c.home()
         return True
 
-    def screenshot(self, scale: float = 1):
-        return images.base64(self.d.screenshot(), scale)
+    def screenshot(self):
+        return self.d.screenshot()
 
     def to_dict(self):
         return dict(id=self.id,
@@ -106,13 +103,9 @@ class DeviceType:
 
 
 class DeviceStatus:
-    INIT = 0
-    RUNNING = 1
-    STOPPED = 2
-
-
-class ActionType:
-    HOME = "home"
+    INITIALIZING = 0
+    CONNECTED = 1
+    DISCONNECTED = 2
 
 
 def wda_proxy(id, port, wda: WDAService, device):
@@ -128,4 +121,4 @@ def wda_proxy(id, port, wda: WDAService, device):
     finally:
         p and p.terminate()
         wda.stop()
-        device.status = DeviceStatus.STOPPED
+        device.status = DeviceStatus.DISCONNECTED

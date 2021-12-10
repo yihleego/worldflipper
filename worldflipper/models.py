@@ -25,3 +25,12 @@ class Result(BaseModel):
 class TaskExecuteParam(BaseModel):
     code: int
     config: Optional[dict]
+
+
+class ActionType:
+    HOME = "home"
+
+
+class ScreenshotType:
+    BASE64 = "base64"
+    FILE = "file"

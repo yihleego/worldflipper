@@ -2,7 +2,7 @@ import logging
 from abc import ABC
 
 from airtest.core.api import Template, connect_device, exists, touch, swipe, sleep
-from worldflipper.assets import Buttons, Items, Events, Tips, templates
+from worldflipper.assets import Buttons, Items, Events, templates
 
 
 class Task(ABC):
@@ -119,16 +119,16 @@ class Task(ABC):
                 return p
 
     def go_home(self):
-        clicked = self.click_any([Buttons.HOME, Buttons.HOME_ACTIVE], wait_time=1)
+        clicked = self.click_any([Buttons.HOME, Buttons.HOME_ACTIVE], wait_time=1, retries=3)
         if not clicked:
             self.go_back()
-            self.click_any([Buttons.HOME, Buttons.HOME_ACTIVE], wait_time=1)
+            self.click_any([Buttons.HOME, Buttons.HOME_ACTIVE], wait_time=1, retries=3)
 
     def go_boss(self):
-        self.click(Buttons.BOSS, wait_time=1)
+        self.click(Buttons.BOSS, wait_time=1, retries=2)
 
     def go_event(self):
-        self.click(Buttons.EVENT, wait_time=1)
+        self.click(Buttons.EVENT, wait_time=1, retries=2)
 
     def go_back(self):
         self.click(Buttons.BACK, wait_time=1)
@@ -145,7 +145,7 @@ class Task(ABC):
         for potion in potions:
             if potion.quantity <= 0:
                 continue
-            t = ts.get(potion.name)
+            t = ts.get(potion.code)
             if t is None:
                 continue
             if t == Items.LODESTAR_BEAD:
@@ -161,7 +161,7 @@ class Task(ABC):
                 self.click(Buttons.OK, retries=3)
             # Decrease the quantity
             potion.quantity -= 1
-            self.logger.info(f'Recovered with {potion.name}, remaining quantity: {potion.quantity}')
+            self.logger.info(f'Recovered with {potion.code}, remaining quantity: {potion.quantity}')
             break
         # Click the cancel button if it exists
         self.click(Buttons.CANCEL)
@@ -173,16 +173,19 @@ class BaseGacha(Task):
 
     def execute(self):
         self.click(Buttons.GACHA_PULL)
-        if self.exists(Tips.NO_TOKEN):
-            self.break_loop()
-            return
         self.click(Buttons.GACHA_RESET)
         self.click(Buttons.OK)
+        # if self.exists(Tips.GACHA_NO_CHANCE):
+        #     self.break_loop()
+        #     return
 
 
 class Boss(Task):
     def __init__(self, uri, config=None):
         super().__init__(uri, TaskType.BOSS, config)
+
+    def pre_execute(self):
+        pass
 
     def execute(self):
         pass
@@ -192,6 +195,9 @@ class Dragon(Task):
     def __init__(self, uri, config=None):
         super().__init__(uri, TaskType.DRAGON, config)
 
+    def pre_execute(self):
+        pass
+
     def execute(self):
         pass
 
@@ -200,6 +206,9 @@ class Maze(Task):
     def __init__(self, uri, config=None):
         super().__init__(uri, TaskType.MAZE, config)
 
+    def pre_execute(self):
+        pass
+
     def execute(self):
         pass
 
@@ -207,6 +216,9 @@ class Maze(Task):
 class Abyss(Task):
     def __init__(self, uri, config=None):
         super().__init__(uri, TaskType.ABYSS, config)
+
+    def pre_execute(self):
+        pass
 
     def execute(self):
         pass
@@ -258,10 +270,10 @@ class Config:
         if potions and isinstance(potions, list):
             for p in potions:
                 try:
-                    name = p.get('name')
+                    code = p.get('code')
                     quantity = p.get('quantity')
-                    if name and quantity:
-                        self.potions.append(Potion(name, int(quantity)))
+                    if code and quantity:
+                        self.potions.append(Potion(code, int(quantity)))
                 except:
                     self.logger.error('Failed to parse potion: %s', p, exc_info=True)
         if skip_pre and isinstance(skip_pre, bool):
@@ -271,8 +283,8 @@ class Config:
 
 
 class Potion:
-    def __init__(self, name: str, quantity: int):
-        self.name = name.lower()
+    def __init__(self, code: str, quantity: int):
+        self.code = code.lower()
         self.quantity = quantity
 
 

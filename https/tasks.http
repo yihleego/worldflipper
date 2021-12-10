@@ -1,10 +1,6 @@
 ### Stop
-POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E/tasks
+DELETE http://127.0.0.1:18000/devices/00008101-000678213A9A001E/tasks
 Content-Type: application/json
-
-{
-  "code": -1
-}
 
 ### Battlefield
 POST http://127.0.0.1:18000/devices/00008101-000678213A9A001E/tasks
@@ -16,11 +12,11 @@ Content-Type: application/json
     "skip_pre": true,
     "potions": [
       {
-        "name": "potion_timelimit",
-        "quantity": 0
+        "code": "potion_timelimit",
+        "quantity": 20
       },
       {
-        "name": "lodestar_bead",
+        "code": "lodestar_bead",
         "quantity": 0
       }
     ]
