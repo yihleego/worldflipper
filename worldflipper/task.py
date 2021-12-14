@@ -180,6 +180,23 @@ class BaseGacha(Task):
         #     return
 
 
+class Bell(Task):
+    def __init__(self, uri, config=None):
+        super().__init__(uri, TaskType.BELL, config)
+
+    def execute(self):
+        if self.exists(Buttons.PAUSE):
+            return
+        if self.click(Buttons.BELL):
+            if self.click(Buttons.JOIN):
+                self.click(Buttons.NOT_READY)
+        else:
+            self.click(Buttons.NEXT)
+            self.click(Buttons.NEXT)
+            self.click(Buttons.NEXT)
+            self.click(Buttons.ROOM_BACK)
+
+
 class Boss(Task):
     def __init__(self, uri, config=None):
         super().__init__(uri, TaskType.BOSS, config)
@@ -302,6 +319,7 @@ class TaskType:
     @staticmethod
     def create_task(type, uri, config):
         mapping = {
+            TaskType.BELL: Bell,
             TaskType.BOSS: Boss,
             TaskType.DRAGON: Dragon,
             TaskType.MAZE: Maze,

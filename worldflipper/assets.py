@@ -36,11 +36,17 @@ class Buttons:
     CANCEL = bt('cancel')
     NEXT = bt('next')
     BACK = bt('back')
+    PAUSE = bt('pause')
     CRUSADE_START = bt('crusade_start')
     CHALLENGE_START = bt('challenge_start')
     CHALLENGE_RESTART = bt('challenge_restart')
     GACHA_PULL = bt('gacha_pull')
     GACHA_RESET = bt('gacha_reset')
+    BELL = bt('bell')
+    JOIN = bt('join')
+    NOT_READY = bt('not_ready')
+    ROOM_BACK = bt('room_back')
+    ROOM_EXIT = bt('room_exit')
 
 
 class Items:
@@ -63,6 +69,7 @@ class Tips:
     QUEST_RESULT = tt('quest_result')
     GACHA_NO_TOKEN = tt('gacha_no_token')
     GACHA_NO_CHANCE = tt('gacha_no_chance')
+
 
 def templates(clazz):
     ts = []
